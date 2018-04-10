@@ -7,7 +7,8 @@ RUN apt-get update && apt-get -y install bzip2 git build-essential gcc curl wget
 RUN mkdir -p /vuejs && mkdir -p /vuejs/src
 
 COPY package*.json /vuejs/
-
+ENV HTTP_PROXY=
+RUN npm config set registry=http://registry.npmjs.org && npm config set proxy http://192.168.66.1:8888
 RUN cd /vuejs && npm install
 
 WORKDIR /vuejs
@@ -15,7 +16,6 @@ WORKDIR /vuejs
 COPY ./ ./
 
 ENV NODE_ENV production
-
 RUN npm run build
 
 FROM nginx:1.13-alpine

@@ -1,0 +1,50 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+    name: ui
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: ui
+    template:
+        metadata:
+            labels:
+                app: ui
+        spec:
+            containers:
+                - name: ui
+                  image: sh4d1/wat-ui:{{ build.commit }}
+                  imagePullPolicy: Always
+                  ports:
+                      - containerPort: 80
+                        name: ui-port
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: ui
+    labels:
+        app: ui
+spec:
+    ports:
+        - port: 80
+          name: ui-port
+    selector:
+        app: ui
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+    name: ui
+    annotations:
+        kubernetes.io/ingress.class: traefik
+spec:
+    rules:
+      - host: "wat.ptrk.io"
+        http:
+            paths:
+                - path: /
+                  backend:
+                      serviceName: ui
+                      servicePort: ui-port

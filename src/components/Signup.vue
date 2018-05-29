@@ -42,6 +42,7 @@
 <script>
 
 import { mapGetters } from 'vuex'
+import { API } from '../apis'
 
 export default {
     name: 'Signup',
@@ -54,7 +55,10 @@ export default {
       }
     },
     computed: {
-        ...mapGetters({ currentUser: 'currentUser' })
+        ...mapGetters({ 
+            isAuthenticated: 'isAuthenticated',
+            errorMessage: 'errorMessage',
+        })
     },
     created () {
         this.checkCurrentLogin()
@@ -72,41 +76,40 @@ export default {
             }
         },
         signup () {
-            this.$http.post('rpc', { service: 'user', method: 'UserService.Create', request: { name: this.name, email: this.email, password: this.password } })
-            .then(request => {
-                console.log(request.data)
-                if ('errors' in request.data) {
-                    this.error = request.data.errors[0].description
-                } else {
-                    this.signupSuccessful(request)
+
+            const { name, email, password  } = this
+            API('signup').doRequest({
+                body: {
+                    name: name,
+                    email: email,
+                    password: password
                 }
-            })
-            .catch(() => {
+            }).on('done', res => {
+                let body = res.body
+                if ('errors' in body) {
+                    this.error = body.errors[0].description
+                } else {
+                    this.signupSuccessful(res)
+                }
+            }).on('fail', err => {
                 this.error = 'Error: Could not sign up'
             })
         },
         signupSuccessful (req) {
-          this.$http.post('rpc', { service: 'user', method: 'UserService.Auth', request: { email: this.email, password: this.password } })
-                .then(request => this.loginSussessful(request))
-                .catch(() => this.loginFailed())
+            const { email, password  } = this
+            API('login').doRequest({
+                body: {
+                    email: email,
+                    password: password
+                }
+            }).on('done', () => {
+                if (this.isAuthenticated) {
+                    this.$router.push('/movies')
+                } else {
+                    this.error = this.errorMessage 
+                }
+            })
         },
-
-        loginSussessful (req) {
-          if (!req.data.token) {
-            this.loginFailed()
-            return
-          }
-          this.error = false
-          localStorage.token = req.data.token
-          this.$store.dispatch('login')
-          this.checkCurrentLogin()
-        },
-
-        loginFailed () {
-          this.error = 'Login failed!'
-          this.$store.dispatch('logout')
-          delete localStorage.token
-        }
     }
 }
 </script>

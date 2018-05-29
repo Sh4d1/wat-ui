@@ -51,6 +51,7 @@ export const rpcWithAuth = (name, service, method, data = {}) => ({
 
 export const API = new ApiTree(Root, [
     rpc('login', 'user', 'UserService.Auth'),
+    rpc('signup', 'user', 'UserService.Create'),
     rpcWithAuth('listMovies', 'movie', 'MovieService.List'),
     rpcWithAuth('getMovie', 'movie', 'MovieService.Get')
 ])
